@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progressive Diffusion Models &mdash; Mohammed Rahman</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red:        #DC2626;
+      --red-dark:   #B91C1C;
+      --red-light:  #FEF2F2;
+      --red-border: #FECACA;
+      --text:       #111827;
+      --text2:      #374151;
+      --muted:      #6B7280;
+      --border:     #E5E7EB;
+      --surface:    #F9FAFB;
+      --white:      #FFFFFF;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* -- NAV -- */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 62px; padding: 0 4rem;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: box-shadow 0.25s;
+    }
+    nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 0.9rem; color: var(--text);
+      text-decoration: none;
+    }
+    .logo-mark {
+      width: 32px; height: 32px; background: var(--red); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.68rem; font-weight: 700; letter-spacing: -0.02em;
+    }
+    .nav-name { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.875rem; color: var(--muted);
+      text-decoration: none; transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* -- HERO -- */
+    #hero {
+      min-height: calc(100vh - 62px);
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 5rem;
+      padding: 5rem 4rem;
+      max-width: 1300px; margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.6s 0.1s ease forwards;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--red-light); color: var(--red);
+      border: 1px solid var(--red-border);
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 0.76rem; font-weight: 600;
+    }
+    .badge-dot {
+      width: 6px; height: 6px; background: var(--red); border-radius: 50%;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    .hero-uni {
+      font-size: 0.76rem; color: var(--muted); font-weight: 400;
+    }
+
+    .hero-title {
+      font-size: clamp(2.2rem, 3.8vw, 3.6rem);
+      font-weight: 700; line-height: 1.1;
+      letter-spacing: -0.03em; margin-bottom: 1rem;
+      opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards;
+    }
+    .hero-title .accent { color: var(--red); }
+
+    .hero-subtitle {
+      font-size: 0.95rem; color: var(--muted); font-style: italic;
+      margin-bottom: 1.25rem; font-weight: 400;
+      opacity: 0; animation: fadeUp 0.6s 0.25s ease forwards;
+    }
+
+    .hero-desc {
+      font-size: 1rem; color: var(--text2); line-height: 1.78;
+      max-width: 480px; margin-bottom: 2rem;
+      opacity: 0; animation: fadeUp 0.6s 0.3s ease forwards;
+    }
+
+    .hero-fids {
+      display: flex; gap: 1.25rem; margin-bottom: 2rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s 0.35s ease forwards;
+    }
+    .fid-chip {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.5rem 0.9rem; text-align: center;
+    }
+    .fid-val {
+      font-size: 1.1rem; font-weight: 700; color: var(--red);
+      display: block; line-height: 1.2;
+    }
+    .fid-lbl {
+      font-size: 0.68rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.09em; font-weight: 500;
+    }
+
+    .hero-ctas {
+      display: flex; gap: 0.85rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s 0.4s ease forwards;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--red); color: white;
+      padding: 0.72rem 1.6rem; border-radius: 8px;
+      font-weight: 600; font-size: 0.9rem;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+      box-shadow: 0 1px 2px rgba(220,38,38,0.2);
+    }
+    .btn-primary:hover {
+      background: var(--red-dark); transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+    }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent; color: var(--text2);
+      padding: 0.72rem 1.6rem; border-radius: 8px;
+      font-weight: 500; font-size: 0.9rem;
+      text-decoration: none; border: 1px solid var(--border); cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    }
+    .btn-ghost:hover {
+      border-color: #9CA3AF; background: var(--surface);
+      transform: translateY(-1px);
+    }
+
+    /* -- HERO VISUAL -- */
+    .hero-visual { opacity: 0; animation: fadeIn 0.9s 0.5s ease forwards; }
+    .diffusion-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.75rem;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+    }
+    .dc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .dc-title { font-size: 0.76rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .dc-badge { font-size: 0.72rem; font-weight: 500; color: var(--red); background: var(--red-light); padding: 2px 9px; border-radius: 999px; }
+    .dc-canvases { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .dc-step { text-align: center; }
+    .dc-step canvas { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+    .dc-step-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+    .dc-step-lbl strong { color: var(--red); display: block; font-weight: 600; }
+    .dc-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .dc-fill { height: 100%; background: var(--red); border-radius: 2px; width: 35%; animation: scanner 2.8s ease-in-out infinite; }
+
+    /* -- PROGRESSION STRIP -- */
+    #progression {
+      background: var(--red);
+      padding: 1.1rem 4rem;
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      overflow: hidden;
+    }
+    .prog-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      color: rgba(255,255,255,0.85); font-size: 0.82rem; font-weight: 500;
+    }
+    .prog-item span { color: white; font-weight: 600; }
+    .prog-sep { color: rgba(255,255,255,0.4); margin: 0 1.5rem; font-size: 1rem; }
+
+    /* -- SECTION COMMONS -- */
+    .section-wrap { max-width: 1300px; margin: 0 auto; padding: 0 4rem; }
+    .section-kicker { font-size: 0.74rem; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.5rem; }
+    .section-h { font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 0.65rem; }
+    .section-sub { font-size: 0.96rem; color: var(--muted); line-height: 1.72; max-width: 560px; margin-bottom: 3rem; }
+
+    /* -- MODELS -- */
+    #models { background: var(--surface); border-top: 1px solid var(--border); padding: 6rem 0; }
+    .model-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+    .model-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.8rem; position: relative; overflow: hidden;
+      opacity: 0; transform: translateY(24px);
+      transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+    }
+    .model-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--red); transform: scaleX(0); transform-origin: left;
+      transition: transform 0.35s ease;
+    }
+    .model-card:hover::after { transform: scaleX(1); }
+    .model-card:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.09); transform: translateY(-4px); border-color: #D1D5DB; }
+    .model-card.in-view { opacity: 1; transform: translateY(0); transition: opacity 0.55s ease, transform 0.55s ease, box-shadow 0.25s, border-color 0.25s; }
+
+    .cn { font-size: 0.69rem; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.75rem; }
+    .ct { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
+    .cs { font-size: 0.79rem; font-weight: 500; color: var(--red); margin-bottom: 1rem; }
+    .cd { font-size: 0.845rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.2rem; }
+
+    .fid-banner {
+      background: var(--red-light); border: 1px solid var(--red-border);
+      border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 1.2rem;
+      display: flex; align-items: baseline; gap: 8px;
+    }
+    .fid-banner-val { font-size: 1.35rem; font-weight: 700; color: var(--red); line-height: 1; }
+    .fid-banner-lbl { font-size: 0.72rem; color: var(--red); font-weight: 500; }
+
+    .c-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-bottom: 1.2rem; }
+    .c-stat { background: var(--surface); border-radius: 7px; padding: 0.5rem 0.75rem; }
+    .c-stat-l { font-size: 0.64rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+    .c-stat-v { font-size: 0.855rem; font-weight: 600; color: var(--text); margin-top: 1px; }
+
+    .c-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .ctag { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; font-size: 0.7rem; color: var(--muted); }
+
+    /* -- GENERATE -- */
+    #generate { padding: 6rem 0; }
+    .tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 2.5rem; }
+    .tab-btn {
+      padding: 0.8rem 1.6rem; font-size: 0.88rem; font-weight: 500;
+      color: var(--muted); background: none; border: none;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      cursor: pointer; transition: color 0.15s; font-family: 'Inter', sans-serif;
+    }
+    .tab-btn:hover { color: var(--text2); }
+    .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: grid; grid-template-columns: 340px 1fr; gap: 3rem; animation: fadeIn 0.3s ease; }
+
+    .gp-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.2rem; }
+    .gp-sub { font-size: 0.79rem; color: var(--red); font-weight: 500; margin-bottom: 0.9rem; }
+    .gp-desc { font-size: 0.855rem; color: var(--muted); line-height: 1.72; margin-bottom: 1rem; }
+    .gp-fid { background: var(--red-light); border: 1px solid var(--red-border); border-radius: 7px; padding: 0.5rem 0.85rem; margin-bottom: 1rem; display: inline-flex; align-items: baseline; gap: 6px; }
+    .gp-fid-v { font-size: 1.1rem; font-weight: 700; color: var(--red); }
+    .gp-fid-l { font-size: 0.7rem; color: var(--red); font-weight: 500; }
+    .gp-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1.4rem; }
+
+    .prompt-wrap { margin-bottom: 1rem; }
+    .prompt-label { font-size: 0.73rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; display: block; }
+    .prompt-input {
+      width: 100%; padding: 0.7rem 1rem;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.88rem; font-family: 'Inter', sans-serif;
+      color: var(--text); background: var(--white); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .prompt-input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+    .prompt-input::placeholder { color: #9CA3AF; }
+
+    .gen-btn {
+      width: 100%; padding: 0.78rem; background: var(--red); color: white;
+      border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+      box-shadow: 0 1px 2px rgba(220,38,38,0.2);
+    }
+    .gen-btn:hover:not(:disabled) { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+    .gen-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+    .gen-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    .spinner { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
+    .is-loading .spinner { display: block; }
+    .is-loading .btn-label { display: none; }
+
+    .outputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .out-box { background: var(--white); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .out-head { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; background: var(--surface); display: flex; align-items: center; gap: 6px; }
+    .out-head-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+    .out-head-dot.live { background: #22C55E; animation: pulse 1.5s ease-in-out infinite; }
+    .out-body { min-height: 280px; padding: 1.25rem; display: flex; align-items: center; justify-content: center; }
+    .out-empty { text-align: center; color: var(--muted); user-select: none; }
+    .out-empty-icon { width: 40px; height: 40px; stroke: #D1D5DB; stroke-width: 1; fill: none; margin: 0 auto 0.5rem; display: block; }
+    .out-empty p { font-size: 0.78rem; }
+    .out-img { max-width: 100%; max-height: 280px; border-radius: 8px; display: none; animation: revealImg 0.45s ease; }
+    .out-img.show { display: block; }
+
+    /* -- ABOUT -- */
+    #about { background: var(--surface); border-top: 1px solid var(--border); padding: 6rem 0; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .about-kicker { font-size: 0.74rem; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.5rem; }
+    .about-h { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .about-p { font-size: 0.9rem; color: var(--muted); line-height: 1.78; margin-bottom: 1rem; }
+    .about-p:last-child { margin-bottom: 0; }
+
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.855rem; }
+    .results-table th { text-align: left; font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; padding: 0 0.75rem 0.65rem; border-bottom: 2px solid var(--border); }
+    .results-table td { padding: 0.85rem 0.75rem; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table .td-fid { font-weight: 700; color: var(--red); font-size: 1rem; }
+    .results-table .td-model { font-weight: 600; color: var(--text); }
+    .met { display: inline-block; background: #DCFCE7; color: #166534; border-radius: 999px; font-size: 0.66rem; font-weight: 600; padding: 2px 7px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* -- FOOTER -- */
+    footer { background: var(--text); padding: 2.5rem 4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-left { }
+    .footer-name { font-size: 0.9rem; font-weight: 600; color: white; }
+    .footer-detail { font-size: 0.78rem; color: #9CA3AF; margin-top: 2px; }
+    .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .footer-links a { font-size: 0.8rem; color: #9CA3AF; text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: #FECACA; }
+
+    /* -- KEYFRAMES -- */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.85); } }
+    @keyframes scanner { 0% { transform: translateX(-120%); } 100% { transform: translateX(350%); } }
+    @keyframes revealImg { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">DM</div>
+    <span>Diffusion Models</span>
+    <span class="nav-name">/ Mohammed Rahman</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#hero">Home</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#generate">Try it</a></li>
+    <li><a href="#about">Results</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div>
+    <div class="hero-eyebrow">
+      <span class="hero-badge"><span class="badge-dot"></span>BSc Computer Science &middot; 2026</span>
+      <span class="hero-uni">University of Manchester</span>
+    </div>
+    <h1 class="hero-title">
+      Progressive<br>
+      <span class="accent">Diffusion</span><br>
+      Models
+    </h1>
+    <p class="hero-subtitle">From DDPMs to Latent Diffusion</p>
+    <p class="hero-desc">
+      Three generative models built from scratch in PyTorch &mdash;
+      a baseline DDPM on MNIST, an Improved DDPM on CIFAR-10,
+      and a text-conditioned latent diffusion model on CUB-200-2011.
+      All diffusion training and sampling implemented without pre-built frameworks.
+    </p>
+
+    <div class="hero-fids">
+      <div class="fid-chip">
+        <span class="fid-val">6.23</span>
+        <span class="fid-lbl">MNIST FID</span>
+      </div>
+      <div class="fid-chip">
+        <span class="fid-val">9.60</span>
+        <span class="fid-lbl">CIFAR-10 FID</span>
+      </div>
+      <div class="fid-chip">
+        <span class="fid-val">9.32</span>
+        <span class="fid-lbl">CUB-200 FID</span>
+      </div>
+    </div>
+
+    <div class="hero-ctas">
+      <a href="#generate" class="btn-primary">Try it live &rarr;</a>
+      <a href="#models" class="btn-ghost">View models</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="diffusion-card">
+      <div class="dc-header">
+        <span class="dc-title">Reverse diffusion process</span>
+        <span class="dc-badge">T = 1000</span>
+      </div>
+      <div class="dc-canvases">
+        <div class="dc-step">
+          <canvas id="c-noise" width="120" height="120"></canvas>
+          <div class="dc-step-lbl"><strong>t = 1000</strong>pure Gaussian noise</div>
+        </div>
+        <div class="dc-step">
+          <canvas id="c-mid" width="120" height="120"></canvas>
+          <div class="dc-step-lbl"><strong>t = 500</strong>denoising&hellip;</div>
+        </div>
+        <div class="dc-step">
+          <canvas id="c-clean" width="120" height="120"></canvas>
+          <div class="dc-step-lbl"><strong>t = 0</strong>clean sample</div>
+        </div>
+      </div>
+      <div class="dc-track"><div class="dc-fill"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRESSION STRIP -->
+<div id="progression">
+  <div class="prog-item"><span>MNIST</span> 28&times;28 &middot; DDPM &middot; FID 6.23</div>
+  <div class="prog-sep">&rarr;</div>
+  <div class="prog-item"><span>CIFAR-10</span> 32&times;32 &middot; Improved DDPM &middot; FID 9.6</div>
+  <div class="prog-sep">&rarr;</div>
+  <div class="prog-item"><span>CUB-200</span> 256&times;256 &middot; Latent text diffusion &middot; FID 9.32</div>
+</div>
+
+<!-- MODELS -->
+<section id="models">
+  <div class="section-wrap">
+    <div class="section-kicker">The models</div>
+    <h2 class="section-h">Three models, increasing complexity</h2>
+    <p class="section-sub">
+      Each stage introduces new architecture choices and conditioning mechanisms &mdash;
+      from a compact baseline to a full latent text-conditioned system, with all
+      forward noising and reverse sampling implemented from scratch.
+    </p>
+
+    <div class="model-grid">
+
+      <!-- MNIST -->
+      <div class="model-card">
+        <div class="cn">Model 01</div>
+        <div class="ct">MNIST Diffusion</div>
+        <div class="cs">Baseline DDPM &middot; U-Net</div>
+        <div class="fid-banner">
+          <span class="fid-banner-val">6.23</span>
+          <span class="fid-banner-lbl">FID &middot; N = 10,000 &middot; test split</span>
+        </div>
+        <p class="cd">
+          A compact U-Net trained to predict noise at each diffusion timestep.
+          Uses residual blocks with GroupNorm and SiLU, sinusoidal timestep
+          embeddings injected into every block, and a single self-attention layer
+          at the 7&times;7 bottleneck for spatial coherence. The encoder path
+          downsamples 28&times;28 &rarr; 14&times;14 &rarr; 7&times;7 with skip connections fused into
+          the decoder.
+        </p>
+        <div class="c-stats">
+          <div class="c-stat"><div class="c-stat-l">Timesteps</div><div class="c-stat-v">T = 1000</div></div>
+          <div class="c-stat"><div class="c-stat-l">Epochs</div><div class="c-stat-v">100</div></div>
+          <div class="c-stat"><div class="c-stat-l">Batch size</div><div class="c-stat-v">200</div></div>
+          <div class="c-stat"><div class="c-stat-l">Sampler</div><div class="c-stat-v">DDPM full</div></div>
+        </div>
+        <div class="c-tags">
+          <span class="ctag">Ho et al. 2020</span>
+          <span class="ctag">Linear &beta; schedule</span>
+          <span class="ctag">GroupNorm + SiLU</span>
+          <span class="ctag">Timestep embeddings</span>
+          <span class="ctag">Self-attention</span>
+        </div>
+      </div>
+
+      <!-- CIFAR -->
+      <div class="model-card">
+        <div class="cn">Model 02</div>
+        <div class="ct">CIFAR-10 Diffusion</div>
+        <div class="cs">Improved DDPM &middot; Class-conditional</div>
+        <div class="fid-banner">
+          <span class="fid-banner-val">9.60</span>
+          <span class="fid-banner-lbl">FID &middot; N = 10,000 &middot; class-balanced</span>
+        </div>
+        <p class="cd">
+          Scales to 128&ndash;256 channel widths with a 4-level encoder (32&rarr;16&rarr;8&rarr;4)
+          and 8-head self-attention at the 8&times;8 and 16&times;16 scales. Class conditioning
+          adds a learned 10&times;512 embedding to the timestep vector. Outputs both
+          noise prediction and a learned variance head. EMA weights (&lambda;=0.9999)
+          used at inference; AMP reduces memory throughout training.
+        </p>
+        <div class="c-stats">
+          <div class="c-stat"><div class="c-stat-l">Timesteps</div><div class="c-stat-v">T = 1000</div></div>
+          <div class="c-stat"><div class="c-stat-l">Epochs</div><div class="c-stat-v">150</div></div>
+          <div class="c-stat"><div class="c-stat-l">Batch size</div><div class="c-stat-v">165</div></div>
+          <div class="c-stat"><div class="c-stat-l">Classes</div><div class="c-stat-v">10</div></div>
+        </div>
+        <div class="c-tags">
+          <span class="ctag">Nichol &amp; Dhariwal 2021</span>
+          <span class="ctag">Cosine &beta; schedule</span>
+          <span class="ctag">8-head self-attention</span>
+          <span class="ctag">EMA</span>
+          <span class="ctag">AMP</span>
+          <span class="ctag">Learned variance</span>
+        </div>
+      </div>
+
+      <!-- CUB -->
+      <div class="model-card">
+        <div class="cn">Model 03</div>
+        <div class="ct">Latent Text Diffusion</div>
+        <div class="cs">Text-conditioned &middot; CUB-200-2011</div>
+        <div class="fid-banner">
+          <span class="fid-banner-val">9.32</span>
+          <span class="fid-banner-lbl">FID &middot; N = 11,786 &middot; train-set protocol</span>
+        </div>
+        <p class="cd">
+          Runs diffusion in a frozen VAE's 4&times;32&times;32 latent space rather than 256&times;256
+          pixels. Frozen CLIP text embeddings (dim 768) condition the U-Net via
+          cross-attention SpatialTransformer modules at the 16&times;16 and 8&times;8 scales.
+          Classifier-free guidance enabled by dropping captions in 20% of training
+          batches. DDIM sampler cuts inference to 50 steps (&approx;20&times; faster).
+        </p>
+        <div class="c-stats">
+          <div class="c-stat"><div class="c-stat-l">Sampler</div><div class="c-stat-v">DDIM 50 steps</div></div>
+          <div class="c-stat"><div class="c-stat-l">Epochs</div><div class="c-stat-v">250</div></div>
+          <div class="c-stat"><div class="c-stat-l">Batch size</div><div class="c-stat-v">28</div></div>
+          <div class="c-stat"><div class="c-stat-l">Text encoder</div><div class="c-stat-v">CLIP (frozen)</div></div>
+        </div>
+        <div class="c-tags">
+          <span class="ctag">Rombach et al. 2022</span>
+          <span class="ctag">Latent space</span>
+          <span class="ctag">Cross-attention</span>
+          <span class="ctag">CFG</span>
+          <span class="ctag">200 species</span>
+          <span class="ctag">DDIM</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- GENERATE -->
+<section id="generate">
+  <div class="section-wrap">
+    <div class="section-kicker">Interactive demo</div>
+    <h2 class="section-h">Generate images</h2>
+    <p class="section-sub">
+      Select a model, click generate, and see the full backward denoising process
+      as an animated GIF alongside the final sample.
+    </p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('mnist',this)">MNIST</button>
+      <button class="tab-btn" onclick="switchTab('cifar',this)">CIFAR-10</button>
+      <button class="tab-btn" onclick="switchTab('cub',this)">CUB-200 &middot; Text</button>
+    </div>
+
+    <!-- MNIST -->
+    <div class="tab-panel active" id="tab-mnist">
+      <div>
+        <div class="gp-title">MNIST Diffusion</div>
+        <div class="gp-sub">Baseline DDPM &middot; T = 1000 &middot; 28 &times; 28 grayscale</div>
+        <div class="gp-fid"><span class="gp-fid-v">FID 6.23</span><span class="gp-fid-l">N = 10,000 &middot; test split</span></div>
+        <p class="gp-desc">
+          Generates a handwritten digit by reversing 1000 Gaussian noising steps.
+          The U-Net receives a sinusoidal timestep embedding at every residual block,
+          allowing the denoiser to behave differently at high-noise vs low-noise steps.
+          Failure cases concentrate on digit 8 &mdash; consistent with genuine ambiguity
+          in the MNIST dataset itself.
+        </p>
+        <div class="gp-tags">
+          <span class="ctag">Linear &beta; schedule</span>
+          <span class="ctag">GroupNorm + SiLU</span>
+          <span class="ctag">Timestep embeddings</span>
+          <span class="ctag">Self-attention (7&times;7)</span>
+          <span class="ctag">DDPM full chain</span>
+        </div>
+        <button class="gen-btn" id="btn-mnist" onclick="generate('mnist')">
+          <div class="spinner"></div>
+          <span class="btn-label">Generate digit</span>
+        </button>
+      </div>
+      <div class="outputs-grid">
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-mnist-img"></span>Generated image</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-mnist-img">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Click generate</p>
+            </div>
+            <img class="out-img" id="out-mnist-img" alt="Generated digit">
+          </div>
+        </div>
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-mnist-gif"></span>Backward process</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-mnist-gif">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <p>t = 1000 &rarr; t = 0</p>
+            </div>
+            <img class="out-img" id="out-mnist-gif" alt="Diffusion process">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CIFAR -->
+    <div class="tab-panel" id="tab-cifar">
+      <div>
+        <div class="gp-title">CIFAR-10 Diffusion</div>
+        <div class="gp-sub">Improved DDPM &middot; Class-conditional &middot; 32 &times; 32</div>
+        <div class="gp-fid"><span class="gp-fid-v">FID 9.60</span><span class="gp-fid-l">N = 10,000 &middot; class-balanced</span></div>
+        <p class="gp-desc">
+          Samples from EMA-averaged weights for best quality. The cosine beta
+          schedule preserves more signal at intermediate timesteps, and BigGAN-style
+          residual blocks improve gradient flow. Best on classes with rigid geometry
+          (vehicles, ships); failure cases concentrate on cat and dog at 32&times;32.
+        </p>
+        <div class="gp-tags">
+          <span class="ctag">Cosine &beta; schedule</span>
+          <span class="ctag">BigGAN ResBlocks</span>
+          <span class="ctag">8-head attention</span>
+          <span class="ctag">EMA weights</span>
+          <span class="ctag">Learned variance</span>
+          <span class="ctag">x<span class="ctag">x&#770;&#8320; clipping</span>#x0302;<span class="ctag">x&#770;&#8320; clipping</span>#x2080; clipping</span>
+        </div>
+        <button class="gen-btn" id="btn-cifar" onclick="generate('cifar')">
+          <div class="spinner"></div>
+          <span class="btn-label">Generate image</span>
+        </button>
+      </div>
+      <div class="outputs-grid">
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-cifar-img"></span>Generated image</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-cifar-img">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Click generate</p>
+            </div>
+            <img class="out-img" id="out-cifar-img" alt="Generated image">
+          </div>
+        </div>
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-cifar-gif"></span>Backward process</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-cifar-gif">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <p>t = 1000 &rarr; t = 0</p>
+            </div>
+            <img class="out-img" id="out-cifar-gif" alt="Diffusion process">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUB -->
+    <div class="tab-panel" id="tab-cub">
+      <div>
+        <div class="gp-title">Latent Text Diffusion</div>
+        <div class="gp-sub">CUB-200-2011 &middot; DDIM 50 steps &middot; 256 &times; 256</div>
+        <div class="gp-fid"><span class="gp-fid-v">FID 9.32</span><span class="gp-fid-l">N = 11,786 &middot; train-set protocol</span></div>
+        <p class="gp-desc">
+          Describe a bird &mdash; the model generates at 256&times;256 by denoising in a
+          compressed 4&times;32&times;32 latent space and decoding with a frozen VAE.
+          Prompt sensitivity is strongest for species and dominant colour.
+          Short free-form prompts generalise beyond the training caption template.
+        </p>
+        <div class="gp-tags">
+          <span class="ctag">Frozen VAE (SD)</span>
+          <span class="ctag">CLIP text encoder</span>
+          <span class="ctag">Cross-attention</span>
+          <span class="ctag">CFG guidance</span>
+          <span class="ctag">DDIM 50 steps</span>
+        </div>
+        <div class="prompt-wrap">
+          <label class="prompt-label" for="cub-prompt">Text prompt</label>
+          <input class="prompt-input" id="cub-prompt" type="text"
+                 placeholder="e.g. a small red bird with black wings">
+        </div>
+        <button class="gen-btn" id="btn-cub" onclick="generate('cub')">
+          <div class="spinner"></div>
+          <span class="btn-label">Generate bird</span>
+        </button>
+      </div>
+      <div class="outputs-grid">
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-cub-img"></span>Generated image</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-cub-img">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Click generate</p>
+            </div>
+            <img class="out-img" id="out-cub-img" alt="Generated bird">
+          </div>
+        </div>
+        <div class="out-box">
+          <div class="out-head"><span class="out-head-dot" id="dot-cub-gif"></span>Backward process</div>
+          <div class="out-body">
+            <div class="out-empty" id="empty-cub-gif">
+              <svg class="out-empty-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <p>DDIM 50 &rarr; 0</p>
+            </div>
+            <img class="out-img" id="out-cub-gif" alt="Diffusion process">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT / RESULTS -->
+<section id="about">
+  <div class="section-wrap">
+    <div class="about-grid">
+      <div>
+        <div class="about-kicker">About this project</div>
+        <h2 class="about-h">Progressive Diffusion Models for Image Generation</h2>
+        <p class="about-p">
+          BSc Computer Science final year project by <strong>Mohammed Rahman</strong>
+          (University of Manchester, 2026). The project implements diffusion training
+          and sampling entirely from scratch in PyTorch &mdash; no pre-built diffusion
+          frameworks &mdash; to evaluate how modern design choices affect generation quality
+          as task complexity increases.
+        </p>
+        <p class="about-p">
+          The structure is a controlled three-stage progression: a baseline DDPM on
+          MNIST validates the end-to-end pipeline; the Improved DDPM on CIFAR-10
+          tests whether architectural and sampling upgrades produce a measurable
+          quality jump; latent text diffusion on CUB-200-2011 demonstrates
+          prompt-guided generation at higher resolution under constrained compute.
+        </p>
+        <p class="about-p">
+          All models were trained on a single desktop with an NVIDIA RTX 3060
+          (12 GB VRAM). Evaluation uses Fr&eacute;chet Inception Distance (FID) as the
+          primary metric alongside qualitative sample grids and denoising trajectories.
+        </p>
+      </div>
+
+      <div>
+        <div class="about-kicker">Results summary</div>
+        <h2 class="about-h" style="margin-bottom:1.5rem">All objectives met</h2>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>FID achieved</th>
+              <th>Target</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-model">MNIST DDPM</td>
+              <td class="td-fid">6.23</td>
+              <td>Coherent digits</td>
+              <td><span class="met">met</span></td>
+            </tr>
+            <tr>
+              <td class="td-model">CIFAR-10 Improved DDPM</td>
+              <td class="td-fid">9.60</td>
+              <td>FID &le; 10</td>
+              <td><span class="met">met</span></td>
+            </tr>
+            <tr>
+              <td class="td-model">CUB-200 Latent text</td>
+              <td class="td-fid">9.32</td>
+              <td>FID &le; 12</td>
+              <td><span class="met">met</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <div class="footer-name">Mohammed Rahman</div>
+    <div class="footer-detail">Progressive Diffusion Models for Image Generation &middot; BSc Computer Science &middot; University of Manchester &middot; 2026</div>
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/MuyazRJ/mnist-diffusion-unet" target="_blank">MNIST repo</a>
+    <a href="https://github.com/MuyazRJ/cifar-10-diffusion" target="_blank">CIFAR-10 repo</a>
+    <a href="https://github.com/MuyazRJ/latent-text-diffusion" target="_blank">CUB-200 repo</a>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8);
+  });
+
+  /* Hero canvas animation */
+  const PX = 7;
+  function targetVal(i, j, cols, rows) {
+    const dx = i - cols/2, dy = j - rows/2;
+    const d = Math.sqrt(dx*dx + dy*dy);
+    return Math.round(240 * (1 - d / Math.sqrt((cols/2)**2 + (rows/2)**2)));
+  }
+  function drawCanvas(id, t) {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    const cols = Math.ceil(canvas.width/PX), rows = Math.ceil(canvas.height/PX);
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const tgt = targetVal(i, j, cols, rows);
+        const noise = Math.floor(Math.random() * 255);
+        const v = Math.round(noise * (1-t) + tgt * t);
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(i*PX, j*PX, PX, PX);
+      }
+    }
+  }
+  drawCanvas('c-noise', 0);
+  drawCanvas('c-clean', 1);
+  let midT = 0, midDir = 1;
+  setInterval(() => {
+    midT += 0.025 * midDir;
+    if (midT >= 1) { midT = 1; midDir = -1; }
+    if (midT <= 0) { midT = 0; midDir = 1; }
+    drawCanvas('c-mid', midT);
+  }, 70);
+
+  /* Scroll-in cards */
+  const cards = document.querySelectorAll('.model-card');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const idx = Array.from(cards).indexOf(e.target);
+        setTimeout(() => e.target.classList.add('in-view'), idx * 120);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  cards.forEach(c => obs.observe(c));
+
+  /* Tabs */
+  function switchTab(model, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + model).classList.add('active');
+  }
+
+  /* Generate */
+  async function generate(model) {
+    const btn = document.getElementById('btn-' + model);
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    const prompt = model === 'cub' ? (document.getElementById('cub-prompt').value || '') : '';
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, prompt })
+      });
+      if (!res.ok) throw new Error('Server error');
+      const data = await res.json();
+
+      const show = (suffix, src, type) => {
+        const img = document.getElementById('out-' + model + '-' + suffix);
+        const empty = document.getElementById('empty-' + model + '-' + suffix);
+        const dot = document.getElementById('dot-' + model + '-' + suffix);
+        img.src = 'data:image/' + type + ';base64,' + src;
+        empty.style.display = 'none';
+        img.classList.add('show');
+        dot.classList.add('live');
+      };
+      show('img', data.image, 'png');
+      show('gif', data.process, 'gif');
+    } catch(e) {
+      alert('Generation failed &mdash; is the server running?');
+    }
+    btn.classList.remove('is-loading');
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>
