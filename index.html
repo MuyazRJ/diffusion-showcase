@@ -361,9 +361,9 @@
     </h1>
     <p class="hero-subtitle">From DDPMs to Latent Diffusion</p>
     <p class="hero-desc">
-      Three generative models built from scratch in PyTorch &mdash;
+      Three generative models built from scratch in PyTorch,
       a baseline DDPM on MNIST, an Improved DDPM on CIFAR-10,
-      and a text-conditioned latent diffusion model on CUB-200-2011.
+      and a text-conditioned latent diffusion model on CUB-10.
       All diffusion training and sampling implemented without pre-built frameworks.
     </p>
 
@@ -378,7 +378,7 @@
       </div>
       <div class="fid-chip">
         <span class="fid-val">9.32</span>
-        <span class="fid-lbl">CUB-200 FID</span>
+        <span class="fid-lbl">CUB-10 FID</span>
       </div>
     </div>
 
@@ -419,7 +419,7 @@
   <div class="prog-sep">&rarr;</div>
   <div class="prog-item"><span>CIFAR-10</span> 32&times;32 &middot; Improved DDPM &middot; FID 9.6</div>
   <div class="prog-sep">&rarr;</div>
-  <div class="prog-item"><span>CUB-200</span> 256&times;256 &middot; Latent text diffusion &middot; FID 9.32</div>
+  <div class="prog-item"><span>CUB-10</span> 256&times;256 &middot; Latent text diffusion &middot; FID 9.32</div>
 </div>
 
 <!-- MODELS -->
@@ -503,7 +503,7 @@
       <div class="model-card">
         <div class="cn">Model 03</div>
         <div class="ct">Latent Text Diffusion</div>
-        <div class="cs">Text-conditioned &middot; CUB-200-2011</div>
+        <div class="cs">Text-conditioned &middot; CUB-10</div>
         <div class="fid-banner">
           <span class="fid-banner-val">9.32</span>
           <span class="fid-banner-lbl">FID &middot; N = 11,786 &middot; train-set protocol</span>
@@ -548,7 +548,7 @@
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('mnist',this)">MNIST</button>
       <button class="tab-btn" onclick="switchTab('cifar',this)">CIFAR-10</button>
-      <button class="tab-btn" onclick="switchTab('cub',this)">CUB-200 &middot; Text</button>
+      <button class="tab-btn" onclick="switchTab('cub',this)">CUB-10 &middot; Text</button>
     </div>
 
     <!-- MNIST -->
@@ -668,7 +668,7 @@
     <div class="tab-panel" id="tab-cub">
       <div>
         <div class="gp-title">Latent Text Diffusion</div>
-        <div class="gp-sub">CUB-200-2011 &middot; DDIM 50 steps &middot; 256 &times; 256</div>
+        <div class="gp-sub">CUB-10 &middot; DDIM 50 steps &middot; 256 &times; 256</div>
         <div class="gp-fid"><span class="gp-fid-v">FID 9.32</span><span class="gp-fid-l">N = 11,786 &middot; train-set protocol</span></div>
         <p class="gp-desc">
           Describe a bird &mdash; the model generates at 256&times;256 by denoising in a
@@ -751,7 +751,7 @@
           The structure is a controlled three-stage progression: a baseline DDPM on
           MNIST validates the end-to-end pipeline; the Improved DDPM on CIFAR-10
           tests whether architectural and sampling upgrades produce a measurable
-          quality jump; latent text diffusion on CUB-200-2011 demonstrates
+          quality jump; latent text diffusion on CUB-10 demonstrates
           prompt-guided generation at higher resolution under constrained compute.
         </p>
         <p class="about-p">
@@ -787,7 +787,7 @@
               <td><span class="met">met</span></td>
             </tr>
             <tr>
-              <td class="td-model">CUB-200 Latent text</td>
+              <td class="td-model">CUB-10 Latent text</td>
               <td class="td-fid">9.32</td>
               <td>FID &le; 12</td>
               <td><span class="met">met</span></td>
@@ -808,7 +808,7 @@
   <div class="footer-links">
     <a href="https://github.com/MuyazRJ/mnist-diffusion-unet" target="_blank">MNIST repo</a>
     <a href="https://github.com/MuyazRJ/cifar-10-diffusion" target="_blank">CIFAR-10 repo</a>
-    <a href="https://github.com/MuyazRJ/latent-text-diffusion" target="_blank">CUB-200 repo</a>
+    <a href="https://github.com/MuyazRJ/latent-text-diffusion" target="_blank">CUB-10 repo</a>
   </div>
 </footer>
 
