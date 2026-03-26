@@ -1,0 +1,3 @@
+[submodule "mnist-diffusion-unet"]
+	path = mnist-diffusion-unet
+	url = https://github.com/MuyazRJ/mnist-diffusion-unet.git
