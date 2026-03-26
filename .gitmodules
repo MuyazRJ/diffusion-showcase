@@ -1,6 +1,3 @@
-[submodule "cifar-10-diffusion"]
-	path = cifar-10-diffusion
-	url = https://github.com/MuyazRJ/cifar-10-diffusion.git
 [submodule "latent-text-diffusion"]
 	path = latent-text-diffusion
 	url = https://github.com/MuyazRJ/latent-text-diffusion.git
