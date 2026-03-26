@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
 from mnist_diffusion_unet.generate_mnist import load_mnist_model, generate_mnist
 from cifar_10_diffusion.generate_cifar import load_cifar_model, generate_cifar
@@ -12,6 +13,7 @@ import base64, io
 import torch
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

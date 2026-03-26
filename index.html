@@ -685,19 +685,20 @@
         </div>
         <div class="prompt-wrap">
           <label class="prompt-label" for="cub-prompt">Text prompt</label>
-          <input class="prompt-input" id="cub-prompt" type="text"
-                 placeholder="e.g. a small red bird with black wings">
+          <textarea class="prompt-input" id="cub-prompt"
+                 placeholder="e.g. a small red bird with black wings"
+                 rows="3" style="resize:vertical;min-height:72px;line-height:1.5"></textarea>
         </div>
         <div class="prompt-wrap">
           <label class="prompt-label">Sampling steps</label>
           <div style="display:flex;gap:0.75rem;margin-top:2px">
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.875rem;color:var(--text2)">
               <input type="radio" name="cub-steps" value="50" checked
-                     style="accent-color:var(--red);width:15px;height:15px"> 50 steps
+                     style="accent-color:var(--red);width:15px;height:15px"> 50 steps &mdash; fast
             </label>
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.875rem;color:var(--text2)">
               <input type="radio" name="cub-steps" value="1000"
-                     style="accent-color:var(--red);width:15px;height:15px"> 1000 steps
+                     style="accent-color:var(--red);width:15px;height:15px"> 1000 steps &mdash; higher quality
             </label>
           </div>
         </div>
@@ -816,36 +817,75 @@
     document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 8);
   });
 
-  /* Hero canvas animation */
-  const PX = 7;
-  function targetVal(i, j, cols, rows) {
-    const dx = i - cols/2, dy = j - rows/2;
-    const d = Math.sqrt(dx*dx + dy*dy);
-    return Math.round(240 * (1 - d / Math.sqrt((cols/2)**2 + (rows/2)**2)));
+  /* -- Hero canvas animation (real MNIST model outputs) -- */
+  const N = 10;
+  const PX = 7, CW = 120, CH = 120;
+  const COLS = Math.ceil(CW / PX), ROWS = Math.ceil(CH / PX);
+
+  function loadImg(src) {
+    return new Promise(res => {
+      const img = new window.Image();
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
+      img.src = src;
+    });
   }
-  function drawCanvas(id, t) {
+
+  const t1000imgs = [], t500imgs = [], t0imgs = [];
+
+  async function preloadHeroImages() {
+    for (let i = 0; i < N; i++) {
+      t1000imgs.push(await loadImg(`/static/hero/mnist_t1000_${i}.png`));
+      t500imgs.push( await loadImg(`/static/hero/mnist_t500_${i}.png`));
+      t0imgs.push(   await loadImg(`/static/hero/mnist_t0_${i}.png`));
+    }
+    startHeroAnimation();
+  }
+
+  function drawNoise(id) {
+    const ctx = document.getElementById(id).getContext('2d');
+    for (let i = 0; i < COLS; i++)
+      for (let j = 0; j < ROWS; j++) {
+        const v = Math.floor(Math.random() * 256);
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(i * PX, j * PX, PX, PX);
+      }
+  }
+
+  function drawToCanvas(id, img) {
     const canvas = document.getElementById(id);
     const ctx = canvas.getContext('2d');
-    const cols = Math.ceil(canvas.width/PX), rows = Math.ceil(canvas.height/PX);
-    for (let i = 0; i < cols; i++) {
-      for (let j = 0; j < rows; j++) {
-        const tgt = targetVal(i, j, cols, rows);
-        const noise = Math.floor(Math.random() * 255);
-        const v = Math.round(noise * (1-t) + tgt * t);
-        ctx.fillStyle = `rgb(${v},${v},${v})`;
-        ctx.fillRect(i*PX, j*PX, PX, PX);
-      }
+    if (img) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    } else {
+      drawNoise(id);
     }
   }
-  drawCanvas('c-noise', 0);
-  drawCanvas('c-clean', 1);
-  let midT = 0, midDir = 1;
-  setInterval(() => {
-    midT += 0.025 * midDir;
-    if (midT >= 1) { midT = 1; midDir = -1; }
-    if (midT <= 0) { midT = 0; midDir = 1; }
-    drawCanvas('c-mid', midT);
-  }, 70);
+
+  let heroIdx = 0;
+
+  function startHeroAnimation() {
+    // Cycle all three canvases together every 2.5s
+    drawToCanvas('c-noise', t1000imgs[heroIdx]);
+    drawToCanvas('c-mid',   t500imgs[heroIdx]);
+    drawToCanvas('c-clean', t0imgs[heroIdx]);
+
+    setInterval(() => {
+      heroIdx = (heroIdx + 1) % N;
+      drawToCanvas('c-noise', t1000imgs[heroIdx]);
+      drawToCanvas('c-mid',   t500imgs[heroIdx]);
+      drawToCanvas('c-clean', t0imgs[heroIdx]);
+    }, 900);
+  }
+
+  // Show noise while images are loading
+  setInterval(() => { if (t1000imgs.length === 0) drawNoise('c-noise'); }, 600);
+  drawNoise('c-noise');
+  drawNoise('c-mid');
+  drawNoise('c-clean');
+
+  preloadHeroImages();
 
   /* Scroll-in cards */
   const cards = document.querySelectorAll('.model-card');
