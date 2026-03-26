@@ -4,3 +4,6 @@
 [submodule "latent-text-diffusion"]
 	path = latent-text-diffusion
 	url = https://github.com/MuyazRJ/latent-text-diffusion.git
+[submodule "mnist_diffusion_unet"]
+	path = mnist_diffusion_unet
+	url = https://github.com/MuyazRJ/mnist-diffusion-unet.git
