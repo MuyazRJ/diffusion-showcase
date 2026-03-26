@@ -4,3 +4,6 @@
 [submodule "mnist_diffusion_unet"]
 	path = mnist_diffusion_unet
 	url = https://github.com/MuyazRJ/mnist-diffusion-unet.git
+[submodule "cifar_10_diffusion"]
+	path = cifar_10_diffusion
+	url = https://github.com/MuyazRJ/cifar-10-diffusion.git
