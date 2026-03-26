@@ -618,7 +618,22 @@
           <span class="ctag">8-head attention</span>
           <span class="ctag">EMA weights</span>
           <span class="ctag">Learned variance</span>
-          <span class="ctag">x<span class="ctag">x&#770;&#8320; clipping</span>#x0302;<span class="ctag">x&#770;&#8320; clipping</span>#x2080; clipping</span>
+        </div>
+        <div class="prompt-wrap">
+          <label class="prompt-label" for="cifar-class">Class</label>
+          <select class="prompt-input" id="cifar-class" style="cursor:pointer">
+            <option value="">Random</option>
+            <option value="0">0 &mdash; Airplane</option>
+            <option value="1">1 &mdash; Automobile</option>
+            <option value="2">2 &mdash; Bird</option>
+            <option value="3">3 &mdash; Cat</option>
+            <option value="4">4 &mdash; Deer</option>
+            <option value="5">5 &mdash; Dog</option>
+            <option value="6">6 &mdash; Frog</option>
+            <option value="7">7 &mdash; Horse</option>
+            <option value="8">8 &mdash; Ship</option>
+            <option value="9">9 &mdash; Truck</option>
+          </select>
         </div>
         <button class="gen-btn" id="btn-cifar" onclick="generate('cifar')">
           <div class="spinner"></div>
@@ -672,6 +687,19 @@
           <label class="prompt-label" for="cub-prompt">Text prompt</label>
           <input class="prompt-input" id="cub-prompt" type="text"
                  placeholder="e.g. a small red bird with black wings">
+        </div>
+        <div class="prompt-wrap">
+          <label class="prompt-label">Sampling steps</label>
+          <div style="display:flex;gap:0.75rem;margin-top:2px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.875rem;color:var(--text2)">
+              <input type="radio" name="cub-steps" value="50" checked
+                     style="accent-color:var(--red);width:15px;height:15px"> 50 steps
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.875rem;color:var(--text2)">
+              <input type="radio" name="cub-steps" value="1000"
+                     style="accent-color:var(--red);width:15px;height:15px"> 1000 steps
+            </label>
+          </div>
         </div>
         <button class="gen-btn" id="btn-cub" onclick="generate('cub')">
           <div class="spinner"></div>
@@ -845,12 +873,20 @@
     const btn = document.getElementById('btn-' + model);
     btn.classList.add('is-loading');
     btn.disabled = true;
-    const prompt = model === 'cub' ? (document.getElementById('cub-prompt').value || '') : '';
+    let prompt = '';
+    let steps = 50;
+    if (model === 'cub') {
+      prompt = document.getElementById('cub-prompt').value || '';
+      const stepsEl = document.querySelector('input[name="cub-steps"]:checked');
+      steps = stepsEl ? parseInt(stepsEl.value) : 50;
+    } else if (model === 'cifar') {
+      prompt = document.getElementById('cifar-class').value || '';
+    }
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, prompt })
+        body: JSON.stringify({ model, prompt, steps })
       });
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
@@ -866,6 +902,11 @@
       };
       show('img', data.image, 'png');
       show('gif', data.process, 'gif');
+
+      // Update the CIFAR output label with the generated class name
+      if (model === 'cifar' && data.class_name) {
+        document.getElementById('dot-cifar-img').nextSibling.textContent = 'Generated image \u2014 ' + data.class_name;
+      }
     } catch(e) {
       alert('Generation failed &mdash; is the server running?');
     }
