@@ -18,6 +18,12 @@ A FastAPI + HTML website that lets you generate images live from three diffusion
 
 ---
 
+### Generate images
+ 
+The interactive demo section lets you select a model, optionally provide a class label or text prompt, and generate a sample live. The final image appears alongside an animated GIF of the full backward denoising process — from pure Gaussian noise at t=1000 down to the clean output at t=0, with the timestep stamped on each frame.
+ 
+![Diffusion Showcase screenshot](website.png)
+
 ## Project structure
 
 ```
